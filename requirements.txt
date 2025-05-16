@@ -3,8 +3,9 @@ pandas>=1.3.0
 numpy>=1.20.0
 psutil>=5.8.0
 
-# Database
-clickhouse-driver>=0.2.0
+# Database - required for the project
+clickhouse-driver>=0.2.0  # For ClickHouse database
+psycopg2-binary>=2.9.0   # For TimescaleDB/PostgreSQL
 
 # Web scraping
 requests>=2.25.0
@@ -16,6 +17,7 @@ webdriver-manager>=3.5.0
 matplotlib>=3.4.0
 seaborn>=0.11.0
 plotly>=5.0.0
+tabulate>=0.8.9
 
 # Testing
 pytest>=6.0.0

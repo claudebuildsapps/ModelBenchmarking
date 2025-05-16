@@ -2,24 +2,25 @@ import time
 import psutil
 import platform
 import json
+import uuid
 from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 
-from .database import ClickHouseManager
+from .database import DatabaseManager, get_database_manager
 
 class ModelBenchmark:
     """
     Core benchmarking functionality for AI models.
     """
     
-    def __init__(self, db_manager: Optional[ClickHouseManager] = None):
+    def __init__(self, db_manager: Optional[DatabaseManager] = None):
         """
         Initialize the benchmarking system.
         
         Args:
-            db_manager: ClickHouse database manager instance
+            db_manager: Database manager instance
         """
-        self.db_manager = db_manager or ClickHouseManager()
+        self.db_manager = db_manager or get_database_manager()
         
     def benchmark_model(self, 
                        model_name: str,
@@ -74,6 +75,7 @@ class ModelBenchmark:
         
         # Prepare benchmark result
         result = {
+            "id": str(uuid.uuid4()),
             "model_name": model_name,
             "model_version": model_version,
             "task_type": task_type,
@@ -82,10 +84,11 @@ class ModelBenchmark:
             "score": score,
             "runtime_ms": int(runtime_ms),
             "memory_usage_mb": float(memory_usage),
-            "hardware_config": json.dumps(hardware_config),
+            "hardware_config": hardware_config,
             "parameters_count": parameters_count,
             "source_url": source_url,
-            "metadata": json.dumps(metadata or {})
+            "metadata": metadata or {},
+            "timestamp": datetime.now().isoformat()
         }
         
         # Store result in database
@@ -113,9 +116,30 @@ class ModelBenchmark:
         if metric == "accuracy":
             correct = sum(1 for y_pred, y_true in zip(outputs, expected_outputs) if y_pred == y_true)
             return correct / len(outputs) if outputs else 0
+            
+        elif metric == "precision":
+            true_positives = sum(1 for y_pred, y_true in zip(outputs, expected_outputs) 
+                               if y_pred == 1 and y_true == 1)
+            predicted_positives = sum(1 for y_pred in outputs if y_pred == 1)
+            return true_positives / predicted_positives if predicted_positives else 0
+            
+        elif metric == "recall":
+            true_positives = sum(1 for y_pred, y_true in zip(outputs, expected_outputs) 
+                              if y_pred == 1 and y_true == 1)
+            actual_positives = sum(1 for y_true in expected_outputs if y_true == 1)
+            return true_positives / actual_positives if actual_positives else 0
+            
+        elif metric == "f1":
+            precision = self._calculate_score(outputs, expected_outputs, "precision")
+            recall = self._calculate_score(outputs, expected_outputs, "recall")
+            return 2 * (precision * recall) / (precision + recall) if (precision + recall) else 0
+            
+        elif metric == "mean_squared_error":
+            return sum((y_pred - y_true) ** 2 for y_pred, y_true in zip(outputs, expected_outputs)) / len(outputs) if outputs else 0
         
         # Add more metrics as needed
         
+        # Default: return 0 for unknown metrics
         return 0.0
         
     def _get_hardware_info(self) -> Dict[str, str]:
@@ -181,3 +205,38 @@ class ModelBenchmark:
             "by_score": sorted_by_score,
             "by_runtime": sorted_by_runtime
         }
+        
+    def get_model_benchmarks(self, model_name: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get benchmark results for a specific model.
+        
+        Args:
+            model_name: Name of the model
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of benchmark results
+        """
+        if not self.db_manager:
+            return []
+            
+        df = self.db_manager.get_model_benchmarks(model_name, limit)
+        return df.to_dict('records') if not df.empty else []
+        
+    def get_top_models(self, task_type: str, metric: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get top-performing models for a specific task and metric.
+        
+        Args:
+            task_type: Type of task
+            metric: Performance metric
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of top models
+        """
+        if not self.db_manager:
+            return []
+            
+        df = self.db_manager.get_top_models(task_type, metric, limit)
+        return df.to_dict('records') if not df.empty else []

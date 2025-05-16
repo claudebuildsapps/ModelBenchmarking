@@ -52,3 +52,33 @@ geckodriver.log
 
 # ClickHouse data
 clickhouse-data/
+
+# Added by Collaborative Intelligence
+.claude/
+CLAUDE.md
+.env.claude
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.crt
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+out/
+node_modules/
+target/
+vendor/
+package-lock.json
+yarn.lock
+Cargo.lock
+Thumbs.db
+.vim/
+*.sublime-workspace
+.cache/
+.pytest_cache/
+.eslintcache
+.parcel-cache/

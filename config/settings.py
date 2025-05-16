@@ -6,12 +6,22 @@ import os
 from typing import Dict, Any
 
 # Database settings
-CLICKHOUSE_CONFIG = {
-    "host": os.environ.get("CLICKHOUSE_HOST", "localhost"),
-    "port": int(os.environ.get("CLICKHOUSE_PORT", 9000)),
-    "user": os.environ.get("CLICKHOUSE_USER", "default"),
-    "password": os.environ.get("CLICKHOUSE_PASSWORD", ""),
-    "database": os.environ.get("CLICKHOUSE_DATABASE", "default")
+DATABASE_CONFIG = {
+    "type": "clickhouse",  # Options: "clickhouse", "timescaledb"
+    "clickhouse": {
+        "host": os.environ.get("CLICKHOUSE_HOST", "localhost"),
+        "port": int(os.environ.get("CLICKHOUSE_PORT", 9000)),
+        "user": os.environ.get("CLICKHOUSE_USER", "default"),
+        "password": os.environ.get("CLICKHOUSE_PASSWORD", ""),
+        "database": os.environ.get("CLICKHOUSE_DATABASE", "benchmark_db")
+    },
+    "timescaledb": {
+        "host": os.environ.get("TIMESCALEDB_HOST", "localhost"),
+        "port": int(os.environ.get("TIMESCALEDB_PORT", 5432)),
+        "user": os.environ.get("TIMESCALEDB_USER", "postgres"),
+        "password": os.environ.get("TIMESCALEDB_PASSWORD", ""),
+        "database": os.environ.get("TIMESCALEDB_DATABASE", "benchmark_db")
+    }
 }
 
 # Web scraping settings
@@ -104,7 +114,7 @@ def get_settings() -> Dict[str, Any]:
         Dictionary with all configuration settings
     """
     return {
-        "database": CLICKHOUSE_CONFIG,
+        "database": DATABASE_CONFIG,
         "scraping": SCRAPING_CONFIG,
         "benchmark": BENCHMARK_CONFIG,
         "paths": PATHS,
